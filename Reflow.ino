@@ -1,4 +1,4 @@
-//1. Refactor Global Variables and Definitions
+
 
 // Pin assignments
 const int measurePin = A0;
@@ -81,12 +81,16 @@ void setup() {
 
 void setupTimer() {
   cli(); // stop interrupts
-  // Timer configuration code as before
+  // Use Timer/Counter TCB3 using a TOP of 10k and prescaler of /2 to run at 1kHz
+  TCB3.CCMP = 20000;
+  TCB3.INTCTRL = (1 << TCB_CAPT_bp); // Enable interrupts
+  TCB3.INTCTRL |= (1 << TCB_CAPT_bp); // Enable interrupts
+  // |= TCB_CLKSEL_CLKDIV2_gc | TCB_ENABLE_bm; // Enable timer with prescaler of /2 to start with 10MHz frequency.
   sei(); // allow interrupts
 }
 
 //3. Interrupt Service Routine (ISR)
-ISR(TIMER0_COMPA_vect) {
+ISR(TIMER2_COMPA_vect) {
   static int itrCounter = 0;
   itrCounter++;
   Time += 0.0005;
@@ -101,9 +105,9 @@ ISR(TIMER0_COMPA_vect) {
 
   controlHeatingElement(currentTemperature);
 
-  if (itrCounter % 2000 == 0) {
+  if (itrCounter % 20 == 0) {
     double thermistorResistance = (SupplyVoltage - measuredVoltage) / measuredVoltage * ReferenceResistance;
-    printDebugInfo(measuredVoltage, thermistorResistance, currentTemperature);
+    printDebugInfo(currentTemperature);
     itrCounter = 0;
   }
 }
@@ -261,16 +265,22 @@ void controlHeatingElement(double currentTemperature) {
 }
 
 
-void printDebugInfo(double measuredVoltage, double thermistorResistance, double currentTemperature) {
-  Serial.print("Measured Voltage: "); Serial.println(measuredVoltage, 10);
-  Serial.print("Thermistor Resistance: "); Serial.println(thermistorResistance, 10);
-  Serial.print("Current Temperature: "); Serial.println(currentTemperature);
-  Serial.print("Time: "); Serial.println(Time, 10);
-  // Add more debug information if needed
+void printDebugInfo(double currentTemperature) {
+    double timeCopy = Time; // Make a copy of the volatile variable Time
+
+    // Sending two values - timeCopy and currentTemperature
+    //Serial.print(timeCopy);
+    //Serial.print(" ");
+    //Serial.println(currentTemperature);
 }
 
 
 //5. Loop Function
 void loop() {
   // The main loop remains empty as functionality is interrupt-driven
+/*  Serial.print("Temperature:");
+  Serial.print(Temp);
+  Serial.print(",");
+  Serial.print("Variable_2:");
+  Serial.println(10);*/
 }
